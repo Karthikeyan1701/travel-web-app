@@ -1,10 +1,12 @@
 import express from 'express';
 import { getTravels } from '../controllers/travelController.js';
-import { protect } from '../middleware/auth.middleware.js';
+import { travelQueryValidator } from '../validators/travel.validator.js';
+import { validateRequest } from '../middleware/validation.middleware.js';
+import { publicLimiter } from '../middleware/rateLimit.middleware.js';
 
 const router = express.Router();
 
 // Public
-router.get('/', getTravels);
+router.get('/', publicLimiter, travelQueryValidator, validateRequest, getTravels);
 
 export default router;
