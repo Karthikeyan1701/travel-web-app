@@ -1,32 +1,42 @@
 import Travel from '../models/Travel.js';
+import { getPagination } from '../utils/pagination.js';
 
-/**
- * GET /api/travels
- * Public
- * Query Parameters:
- *      - destination
- *      - minPrice
- *      - maxPrice
- *      - rating
- */
+export const getTravelsService = async (queryParams) => {
+  const { page, limit, skip } = getPagination(queryParams);
+  const filter = {};
 
-export const getTravelsService = async (filters) => {
-  const { destination, minPrice, maxPrice, rating } = filters;
-  const query = {};
-
-  if (destination) {
-    query.destination = { $regex: destination, $options: 'i' };
+  if (queryParams.minPrice || queryParams.maxPrice) {
+    filter.price = {};
+    if (queryParams.minPrice) filter.price.$gte = Number(queryParams.minPrice);
+    if (queryParams.maxPrice) filter.price.$lte = Number(queryParams.maxPrice);
   }
 
-  if (minPrice || maxPrice) {
-    query.price = {};
-    if (minPrice) query.price.$gte = Number(minPrice);
-    if (maxPrice) query.price.$lte = Number(maxPrice);
+  if (queryParams.rating) {
+    filter.rating = Number(queryParams.rating);
   }
 
-  if (rating) {
-    query.rating = { $gte: Number(rating) };
-  }
+  const allowedSortFields = ["price", "rating", "createdAt"];
+  const sortField = allowedSortFields.includes(queryParams.sort) 
+    ? queryParams.sort
+    : "createdAt";
 
-  return Travel.find(query).sort({ createdAt: -1 });
+  const sortOrder = queryParams.order === "asc" ? 1 : -1;
+
+  const total = await Travel.countDocuments(filter);
+
+  const data = await Travel.find(filter)
+    .sort({ [sortField]: sortOrder })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
 };
