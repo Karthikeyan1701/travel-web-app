@@ -19,8 +19,13 @@ export const registerUserService = async (email, password) => {
 export const loginUserService = async (email, password) => {
   const user = await User.findOne({ email }).select('+password');
 
-  if (!user || !(await user.comparePassword(password))) {
+  if (!user) {
     throw new Error('Invalid credentials');
+  }
+
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    throw new Error("Invalid credentials");
   }
 
   const payload = { id: user._id };
@@ -32,8 +37,6 @@ export const loginUserService = async (email, password) => {
   await user.save();
 
   return {
-    id: user._id,
-    email: user.email,
     accessToken,
     refreshToken,
   };

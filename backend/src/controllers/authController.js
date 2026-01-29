@@ -29,15 +29,13 @@ export const loginUser = async (req, res, next) => {
       password,
     );
 
-    return;
-    res
-      .cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      })
-      .status(200)
-      .json({ accessToken });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
+
+    return res.status(200).json({ accessToken });
   } catch (error) {
     next(error);
   }
@@ -70,15 +68,13 @@ export const refreshAccessToken = async (req, res, next) => {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    return;
-    res
-      .cookie('refreshToken', newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      })
-      .status(200)
-      .json({ accessToken: newAccessToken });
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    return res.status(200).json({ accessToken: newAccessToken });
   } catch (error) {
     next(error);
   }
@@ -92,11 +88,9 @@ export const logoutUser = async (req, res, next) => {
     user.refreshToken = null;
     await user.save();
 
-    return;
-    res
-      .clearCookie('refreshToken')
-      .status(200)
-      .json({ message: 'Logged out successfully' });
+    res.clearCookie('refreshToken')
+
+    return res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
     next(error);
   }
