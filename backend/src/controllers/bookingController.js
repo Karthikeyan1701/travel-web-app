@@ -11,7 +11,10 @@ export const bookTravel = async (req, res, next) => {
             travelDate
         );
 
-        return res.status(201).json(booking);
+        return res.status(201).json({
+            success: true,
+            data: booking
+        });
     } catch (error) {
         next(error);
     }
@@ -24,7 +27,10 @@ export const cancelTravelBooking = async (req, res, next) => {
             req.user._id
         );
 
-        return res.json(booking);
+        return res.status(200).json({
+            success: true,
+            data: booking
+        });
     } catch (error) {
         next(error);
     }

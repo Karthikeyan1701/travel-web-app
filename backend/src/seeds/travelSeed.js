@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import dotenv from 'dotenv';
 import connectDB from "../config/db.js"
 
@@ -11,25 +10,25 @@ const travels = [
         destination: "Paris",
         price: 1200,
         rating: 5,
-        availableDates: ["2026-02-10", "2026-03-15"]
+        availableDates: [new Date("2026-02-10"), new Date("2026-03-15")]
     },
     {
         destination: "Rome",
         price: 900,
         rating: 4,
-        availableDates: ["2026-03-12", "2026-04-02"]
+        availableDates: [new Date("2026-03-12"), new Date("2026-04-02")]
     },
     {
         destination: "Bali",
         price: 1500,
         rating: 5,
-        availableDates: ["2026-04-13", "2026-05-01"]
+        availableDates: [new Date("2026-04-13"), new Date("2026-05-01")]
     },
     {
         destination: "Dubai",
         price: 1100,
         rating: 4,
-        availableDates: ["2026-04-28", "2026-05-31"]
+        availableDates: [new Date("2026-04-28"), new Date("2026-05-31")]
     }
 ];
 
@@ -43,9 +42,9 @@ const seedTravels = async () => {
         await Travel.insertMany(travels);
         console.log("Travel data seeded successfully");
 
-        process.exit();
+        process.exit(0);
     } catch (error) {
-        console.error(error);
+        console.error("Seeding failed:", error);
         process.exit(1);
     }
 };

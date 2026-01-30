@@ -20,7 +20,7 @@ const travelSchema = new mongoose.Schema(
             index: true
         },
         availableDates: {
-            type: [String],
+            type: [Date],
             required: true
         }
     },

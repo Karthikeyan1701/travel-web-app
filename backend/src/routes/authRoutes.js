@@ -10,7 +10,7 @@ const router = express.Router();
 router.post('/register', authLimiter, registerValidator, validateRequest, registerUser);
 router.post('/login', authLimiter, loginValidator, validateRequest, loginUser);
 
-router.post("/refresh", refreshAccessToken);
+router.post("/refresh", authLimiter, refreshAccessToken);
 
 router.post("/logout", protect, logoutUser);
 
