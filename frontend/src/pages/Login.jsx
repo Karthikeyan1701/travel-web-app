@@ -1,46 +1,65 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { loginSuccess } from '../features/auth/authSlice';
+import { useIsAuthenticated } from '../hooks/useIsAuthenticated';
+import { useLoginMutation } from '../features/auth/authApi';
 
 export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const emailRef = useRef(null);
+  const dispatch = useDispatch(); 
+  const isAuthenticated = useIsAuthenticated();
 
-    const { login } = useAuth();
-    const navigate = useNavigate();
+  const [login, { isLoading, error }] = useLoginMutation();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await login(email, password);
-            navigate("/");
-        } catch {
-            setError("Invalid credentials");
-        }
-    };
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-    return (
-        <form onSubmit={handleSubmit}>
-            <h2>Login Form</h2>
+  useEffect(() => {
+    emailRef.current?.focus();
+  }, []);
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+  // useEffect for redirecting to travels page
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/travels', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
-            <input 
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-            />
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+        const res = await login({ email, password }).unwrap();
+        dispatch(loginSuccess(res.accessToken));
+    } catch {
+        console.error('Login failed');
+    }
+  };
 
-            <input 
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-            />
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Login Form</h2>
 
-            <button type="submit">Login</button>
-        </form>
-    );
+      {error && <p className="text-red-600">Login failed</p>}
+      <input
+        type="email"
+        ref={emailRef}
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <button disabled={isLoading}>
+        {isLoading ? 'Logging in...' : 'Login'}
+      </button>
+    </form>
+  );
 }
