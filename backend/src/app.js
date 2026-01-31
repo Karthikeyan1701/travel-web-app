@@ -12,10 +12,8 @@ import { requestLogger } from './middleware/logger.middleware.js';
 const app = express();
 
 // Global middlewares
-app.use(express.json());
-app.use(cookieParser());
+
 app.use(helmet());
-app.use(requestLogger);
 app.use(
   cors({
     origin: [
@@ -25,11 +23,19 @@ app.use(
     credentials: true,
   }),
 );
+app.use(express.json());
+app.use(cookieParser());
+app.use(requestLogger);
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/travels', travelRoutes);
 app.use('/api/bookings', bookingRoutes);
+
+// Health check route
+app.get('/health', (req, res) => {
+  return res.status(200).json({ status: "OK" });
+});
 
 // Error Handler
 app.use(errorHandler);

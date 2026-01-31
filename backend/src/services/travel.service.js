@@ -15,12 +15,15 @@ export const getTravelsService = async (queryParams) => {
     filter.rating = Number(queryParams.rating);
   }
 
-  const allowedSortFields = ["price", "rating", "createdAt"];
-  const sortField = allowedSortFields.includes(queryParams.sort) 
-    ? queryParams.sort
-    : "createdAt";
+  const allowedSortFields = ['price', 'rating', 'createdAt'];
+  if (queryParams.sort && !allowedSortFields.includes(queryParams.sort)) {
+    throw new Error('Invalid sort field');
+  }
 
-  const sortOrder = queryParams.order === "asc" ? 1 : -1;
+  const sortField = queryParams.sort || 'createdAt';
+
+  const sortOrder =
+    queryParams.order === 'asc' ? 1 : queryParams.order === 'desc' ? -1 : -1;
 
   const total = await Travel.countDocuments(filter);
 
@@ -36,7 +39,7 @@ export const getTravelsService = async (queryParams) => {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit)
-    }
+      totalPages: Math.ceil(total / limit),
+    },
   };
 };

@@ -11,6 +11,10 @@ export const cancelBooking = async (bookingId, userId) => {
         throw new Error("Not authorized to cancel this booking");
     }
 
+    if (booking.status === "CANCELLED") {
+        throw new Error("Booking already cancelled");
+    }
+
     if (booking.status === "COMPLETED") {
         throw new Error("Completed booking cannot be cancelled");
     }

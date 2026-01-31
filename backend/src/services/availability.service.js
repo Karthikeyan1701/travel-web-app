@@ -7,9 +7,14 @@ export const checkAvailability = async (travelId, travelDate) => {
         throw new Error("Travel not found");
     }
 
-    if (!travel.availableDates.includes(travelDate)) {
+    const isAvailable = travel.availableDates.some(
+        (date) =>
+            new Date(date).toDateString() === new Date(travelDate).toDateString()
+    );
+
+    if (!isAvailable) {
         throw new Error("Travel not available on selected date");
     }
 
-    return true;
+    return travel;
 };
