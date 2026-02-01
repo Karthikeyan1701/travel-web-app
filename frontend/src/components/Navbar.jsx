@@ -1,16 +1,20 @@
-export default function Navbar({ isAuthenticated, onLogout }) {
-    return (
-        <nav>
-            <a href="/travels">Travels</a>{" "}
-            <a href="/bookings">Bookings</a>
+import { Link } from 'react-router-dom';
 
-            {isAuthenticated && (
-                <button
-                    onClick={onLogout}
-                >
-                    Logout
-                </button>
-            )}
-        </nav>
-    );
+export default function Navbar(
+  isAuthenticated,
+  onLogout,
+  isLoggingOut
+) {
+  return (
+    <nav>
+      <Link to='/travels'>Travels</Link>{' '}
+      <Link to='/bookings'>Bookings</Link>
+
+      {isAuthenticated && ( 
+        <button onClick={onLogout} disabled={isLoggingOut}>
+            {isLoggingOut ? 'Logging out...' : 'Logout'}
+        </button>
+      )}
+    </nav>
+  );
 }

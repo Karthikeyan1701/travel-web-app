@@ -2,12 +2,14 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGetTravelsQuery } from '../features/travels/travelsApi';
 import TravelCard from '../components/TravelCard';
+import TravelCardSkeleton from '../components/skeletons/TravelCardSkeleton';
+import ErrorMessage from '../components/ui/ErrorMessage';
 
 export default function Travels() {
   const navigate = useNavigate();
 
   // RTK Query - Server state
-  const { travelData, isLoading, error } = useGetTravelsQuery();
+  const { data: travelData, isLoading, error } = useGetTravelsQuery();
 
   // UI state
   const [maxPrice, setMaxPrice] = useState(1500);
@@ -27,8 +29,19 @@ export default function Travels() {
   );
 
   // Loading and error handling
-  if (isLoading) return <p>Loading travels....</p>;
-  if (error) return <p>Failed to load travels</p>;
+  if (isLoading) {
+    return (
+      <>
+        <TravelCardSkeleton />
+        <TravelCardSkeleton />
+        <TravelCardSkeleton />
+      </>
+    );
+  }
+
+  if (error) {
+    return <ErrorMessage message='Failed to load travels' />;
+  }
 
   return (
     <div>
@@ -39,6 +52,10 @@ export default function Travels() {
         value={maxPrice} 
         onChange={(e) => setMaxPrice(Number(e.target.value))}
       />
+
+      {filteredTravels.length === 0 && (
+        <p>No travels found for the selected price range</p>
+      )}
 
       {filteredTravels.map((travel) => (
         <TravelCard

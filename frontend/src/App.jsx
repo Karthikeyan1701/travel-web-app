@@ -1,23 +1,39 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+import { Routes, Route } from 'react-router-dom';
 
+// Layouts
 import PublicLayout from './layouts/PublicLayout';
 import AppLayout from './layouts/AppLayout';
+
+// Route guards
 import ProtectedRoute from './routes/ProtectedRoute';
+
+// Skeleton fallback
+import SkeletonBox from './components/skeletons/SkeletonBox';
 
 import { useScrollToTop } from './hooks/useScrollToTop';
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Travels from './pages/Travels';
-import TravelDetails from './pages/TravelDetails';
-import Bookings from './pages/Bookings';
-import NotFound from './pages/NotFound';
+// Lazy loaded pages
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Travels = lazy(() => import('./pages/Travels'));
+const TravelDetails = lazy(() => import('./pages/TravelDetails'));
+const Bookings = lazy(() => import('./pages/Bookings'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
-const App = () => {
+export default function App() {
   useScrollToTop();
 
   return (
-    <BrowserRouter>
+    <Suspense
+      fallback={
+        <div style={{ padding: '16px' }}>
+          <SkeletonBox width="60%" height="20px" />
+          <SkeletonBox width="40%" />
+          <SkeletonBox width="80%" />
+        </div>
+      }
+    >
       <Routes>
         {/* Public routes */}
         <Route element={<PublicLayout />}>
@@ -26,23 +42,38 @@ const App = () => {
         </Route>
 
         {/* Protected routes */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/travels" element={<Travels />} />
-          <Route path="/travels/:id" element={<TravelDetails />} />
-          <Route path="/bookings" element={<Bookings />} />
+        <Route element={<AppLayout />}>
+          <Route 
+            path="/travels" 
+            element={
+              <ProtectedRoute>
+                <Travels />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route
+            path="/travels/:id"
+            element={
+              <ProtectedRoute>
+                <TravelDetails />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route
+            path="/bookings"
+            element={
+              <ProtectedRoute>
+                <Bookings />
+              </ProtectedRoute>
+            } 
+          />
         </Route>
 
         {/* 404 Error Page */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
+    </Suspense>
   );
-};
-
-export default App;
+}

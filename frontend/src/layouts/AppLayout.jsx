@@ -1,14 +1,19 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { useAuth } from "../context/useAuth";
+import { useLogout } from "../hooks/useLogout";
+import { useIsAuthenticated } from "../hooks/useIsAuthenticated";
 
 export default function AppLayout() {
-    const { accessToken, logout } = useAuth();
+    const isAuthenticated = useIsAuthenticated();
+
+    const { logout, isLoggingOut } = useLogout();
+
     return (
         <>
             <Navbar 
-                isAuthenticated={!!accessToken}
+                isAuthenticated={isAuthenticated}
                 onLogout={logout}
+                isLoggingOut={isLoggingOut}
             />
             <main>
                 <Outlet />

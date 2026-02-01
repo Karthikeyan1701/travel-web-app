@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { loginSuccess } from '../features/auth/authSlice';
 import { useIsAuthenticated } from '../hooks/useIsAuthenticated';
 import { useLoginMutation } from '../features/auth/authApi';
+import ErrorMessage from '../components/ui/ErrorMessage';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,10 +12,11 @@ export default function Login() {
   const dispatch = useDispatch(); 
   const isAuthenticated = useIsAuthenticated();
 
-  const [login, { isLoading, error }] = useLoginMutation();
+  const [login, { isLoading, error: apiError }] = useLoginMutation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [uiError, setUiError] = useState(null);
 
   useEffect(() => {
     emailRef.current?.focus();
@@ -29,11 +31,20 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUiError(null);
+
+    if (!email || !password) {
+      setUiError('Email and password are required');
+      return;
+    }
+
     try {
         const res = await login({ email, password }).unwrap();
         dispatch(loginSuccess(res.accessToken));
-    } catch {
-        console.error('Login failed');
+    } catch (err) {
+        setUiError(
+          err?.data?.message || 'Invalid email or password'
+        );
     }
   };
 
@@ -41,7 +52,11 @@ export default function Login() {
     <form onSubmit={handleSubmit}>
       <h2>Login Form</h2>
 
-      {error && <p className="text-red-600">Login failed</p>}
+      {/* Error Handling */}
+      <ErrorMessage 
+        message={uiError || apiError?.data?.message}
+      />
+
       <input
         type="email"
         ref={emailRef}
