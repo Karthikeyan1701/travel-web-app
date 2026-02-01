@@ -1,45 +1,24 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
+import {
+    useCreateBookingMutation, 
+    useGetBookingsQuery, 
+    useCancelBookingMutation
+} from "../features/bookings/bookingsApi";
+import BookingsSkeleton from "../components/skeletons/BookingsSkeleton";
+import ErrorMessage from "../components/ui/ErrorMessage";
 
 // Initial State
-const initialState = {
-    step: "IDLE",    // IDLE | SELECT_DATE | CONFIRMING | SUCCESS | ERROR
-    selectedDate: null,
-    error: null,
-};
+const initialState = { step: "IDLE" };
 
 // Reducer function
 function bookingReducer(state, action) {
     switch (action.type) {
-        case "SELECT_DATE":
-            return {
-                ...state,
-                step: "SELECT_DATE",
-                selectedDate: action.payload,
-                error: null,
-            };
-        
-        case "CONFIRM":
-            return {
-                ...state,
-                step: "CONFIRMING",
-            };
-        
-        case "SUCCESS":
-            return {
-                ...state,
-                step: "SUCCESS",
-            };
-            
-        case "ERROR":
-            return {
-                ...state,
-                step: "ERROR",
-                error: action.payload,
-            };
-        
+        case 'START_BOOKING':
+            return { step: 'CONFIRMING' };
+        case 'FINISH_BOOKING':
+            return { step: 'DONE' };        
         case "RESET":
             return initialState;
-
         default:
             return state;
     }
@@ -47,74 +26,119 @@ function bookingReducer(state, action) {
 
 export default function Bookings() {
     const [state, dispatch] = useReducer(bookingReducer, initialState);
+    const [cancellingId, setCancellingId] = useState(null);
+    const [uiError, setUiError] = useState(null);
+
+    // RTK Query Hooks
+    const { 
+        data, 
+        isLoading: isBookingsLoading,
+        error: bookingsError
+    } = useGetBookingsQuery();
+
+    const [createBooking, { isLoading: isBooking, error: createError }] = useCreateBookingMutation();
+
+    const [cancelBooking, { isLoading: isCancelling, error: cancelError }] = useCancelBookingMutation();
+
+    const handleBook = async () => {
+        setUiError(null);
+        dispatch({ type: 'START_BOOKING' });
+
+        try {
+            await createBooking({
+                travelId: '123',
+                date: '2026-03-15',
+            }).unwrap();
+
+            dispatch({ type: 'FINISH_BOOKING' });
+        } catch (err) {
+            setUiError(
+                err?.data?.message || 'Failed to create booking'
+            );
+            dispatch({ type: 'RESET' });
+        }
+    };
+
+    const handleCancel = async (bookingId) => {
+        setUiError(null);
+        setCancellingId(bookingId);
+
+        try { 
+            await cancelBooking(bookingId).unwrap();
+        } catch (err) { 
+            setUiError(
+                err?.data?.message || 'Failed to cancel booking'
+            );
+        } finally {
+            setCancellingId(null);
+        }
+    };
+
+    if (isBookingsLoading) return <BookingsSkeleton />;
+
+    if (bookingsError) {
+        return <ErrorMessage message='Failed to load bookings' />
+    }
 
     return (
         <div>
-            <h2>Booking Flow</h2>
+            <h2>Bookings</h2>
 
-            {/* IDLE STATE */}
+            {/* MUTATION ERRORS */}
+            <ErrorMessage 
+                message={
+                    uiError || 
+                    createError?.data?.message || 
+                    cancelError?.data?.message
+                }
+            />
+
+            {/* CREATE BOOKING */}
             {state.step === "IDLE" && (
                 <button
-                    onClick={() =>
-                        dispatch({
-                            type: "SELECT_DATE",
-                            payload: "2026-03-15",
-                        })
-                    }
+                    onClick={handleBook}
+                    disabled={isBooking}
                 >
-                    Select Date
+                    {isBooking ? "Booking..." : "Book Travel"}
                 </button>
             )}
 
-            {/* DATE SELECTED */}
-            {state.step === "SELECT_DATE" && (
-                <>
-                    <p>Selected Date: {state.selectedDate}</p>
-                    <button onClick={() => dispatch({ type: "CONFIRM" })}>
-                        Confirm Booking
-                    </button>
-                </>
+            {state.step === "DONE" && (
+                <button
+                    onClick={() => dispatch({ type: 'RESET' })}
+                >
+                    Book Another
+                </button>
             )}
 
-            {/* CONFIRMING STATE */}
-            {state.step === "CONFIRMING" && (
-                <>
-                    <p>Processing booking...</p>
-                    <button onClick={() => dispatch({ type: "SUCCESS" })}>
-                        Simulate Success
-                    </button>
-                    <button
-                        onClick={() => 
-                            dispatch({
-                                type: "ERROR",
-                                payload: "Payment failed",
-                            })
-                        }
-                    >
-                        Simulate Error
-                    </button>
-                </>
-            )}
+            <hr />
 
-            {/* SUCCESS STATE */}
-            {state.step === "SUCCESS" && (
-                <>
-                    <p>Booking Successful</p>
-                    <button onClick={() => dispatch({ type: "RESET" })}>
-                        Book Another
-                    </button>
-                </>
-            )}
+            {/* EXISTING BOOKINGS */}
+            <h3>My Bookings</h3>
 
-            {/* ERROR STATE */}
-            {state.step === "ERROR" && (
-                <>
-                    <p>Error: {state.error}</p>
-                    <button onClick={() => dispatch({ type: "RESET" })}>
-                        Try Again
-                    </button>
-                </>
-            )}
+            {data.data.length === 0 && <p>No bookings found</p>}
+
+            {data?.data?.map((booking) => (
+                <div key={booking._id}>
+                    <p>Destination: {booking.travel.destination}</p>
+                    <p>Status: {booking.status}</p>
+
+                    {booking.status === 'CONFIRMED' && (
+                        <button 
+                            onClick={() => handleCancel(booking._id)}
+                            disabled={isCancelling && cancellingId === booking._id}
+                        >
+                            {isCancelling && cancellingId === booking._id
+                                ? 'Cancelling...'
+                                : 'Cancel'}
+                        </button>
+                    )}
+
+                    {booking.status === 'PENDING' && <p>Processing...</p>}
+                    {booking.status === 'CANCELLED' && <p>Cancelled</p>}
+                    {booking.status === 'FAILED' && <p>Payment Failed</p>}
+                </div>
+            ))}
         </div>
     );
 }

@@ -78,6 +78,7 @@ export const refreshAccessToken = async (req, res, next) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({ 
@@ -85,6 +86,12 @@ export const refreshAccessToken = async (req, res, next) => {
       accessToken: newAccessToken
     });
   } catch (error) {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    
     next(error);
   }
 };
