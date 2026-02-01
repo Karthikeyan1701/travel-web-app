@@ -1,13 +1,27 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider } from "react-redux";
+import { BrowserRouter } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
+
+import { store } from './app/store.js';
 import './index.css';
 import App from './App.jsx';
-import { AuthProvider } from './context/AuthProvider.jsx';
+import ErrorFallback from './components/ErrorFallback.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <Provider store={store}>
+      <BrowserRouter>
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onError={(error, info) => {
+            console.error('UI Crash:', error, info);
+          }}
+        >
+          <App />
+        </ErrorBoundary>
+      </BrowserRouter>
+    </Provider>
   </StrictMode>,
 );
