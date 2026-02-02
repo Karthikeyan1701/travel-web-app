@@ -8,6 +8,7 @@ import { store } from './app/store.js';
 import './index.css';
 import App from './App.jsx';
 import ErrorFallback from './components/ErrorFallback.jsx';
+import ThemeProvider from './context/ThemeProvider.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -19,7 +20,9 @@ createRoot(document.getElementById('root')).render(
             console.error('UI Crash:', error, info);
           }}
         >
-          <App />
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
         </ErrorBoundary>
       </BrowserRouter>
     </Provider>
