@@ -15,7 +15,7 @@ export default function AppLayout() {
                 onLogout={logout}
                 isLoggingOut={isLoggingOut}
             />
-            <main>
+            <main className="min-h-screen bg-white text-black dark:bg-gray-900 dark:text-gray-100">
                 <Outlet />
             </main>
         </>
